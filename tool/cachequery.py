@@ -549,7 +549,7 @@ def main():
     else:
         CQ.interactive().cmdloop()
 
-    # destroyy
+    # destroy
     CQ.reenable_noise()
 
 if __name__ == '__main__':
