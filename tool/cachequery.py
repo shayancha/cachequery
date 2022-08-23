@@ -12,10 +12,11 @@ CacheQuery log - {}
 
 class CacheQuery():
 
-    def __init__(self, conf):
+    def __init__(self, conf, raw):
         self.settings = conf['General']
         self.system = conf['System']
         self.conf = conf
+        self.raw = raw
 
         # open db from beggining
         if self.settings['db_cache']:
@@ -302,10 +303,12 @@ class CacheQuery():
         try:
             if refresh:
                 with open(path, 'w') as endpoint:
+                    print(query)
                     endpoint.write('{}\n'.format(query))
                     endpoint.close()
             with open(path, 'r') as endpoint:
                 res = endpoint.readline()
+                print(res.rstrip())
                 endpoint.close()
                 return res.rstrip()
         except:
@@ -316,27 +319,40 @@ class CacheQuery():
         self.run(input)
 
     def run(self, input, bypass_cache=False, refresh=True):
-        try:
-            query, query_raw = self.parse(input)
-        except:
-            return
-        answer = []
-        for i in range(len(query)):
-            q_raw = query_raw[i]
-            q = query[i]
-            ret = ''
-            # Check cache to safe avoid real query (only for deterministic policies)
-            if self.db and not bypass_cache:
-                ret = self.db.get(str.encode(q))
-            if not ret:
-                ret = self.query(q_raw, refresh)
-                if self.db:
-                    self.db.put(str.encode(q), str.encode(ret))
-            else:
-                ret = ret.decode('utf-8')
-            print('{} -> {}'.format(q, ret))
-            answer.append('{} -> {}'.format(q, ret))
-        return answer
+        if self.raw == True:
+            # use raw input
+            answer = []
+            query_raw = [input]
+            q_raw = query_raw[0] 
+            ret = self.query(q_raw, refresh)
+            print('{} -> {}'.format(q_raw, ret))
+            answer.append('{} -> {}'.format(q_raw, ret))
+            return answer
+        else:
+        
+            try:
+                query, query_raw = self.parse(input)
+            except:
+                return
+            answer = []
+            for i in range(len(query)):
+                q_raw = query_raw[i]
+                print(q_raw)
+                q = query[i]
+                print(q)
+                ret = ''
+                # Check cache to safe avoid real query (only for deterministic policies)
+                if self.db and not bypass_cache:
+                    ret = self.db.get(str.encode(q))
+                if not ret:
+                    ret = self.query(q_raw, refresh)
+                    if self.db:
+                        self.db.put(str.encode(q), str.encode(ret))
+                else:
+                    ret = ret.decode('utf-8')
+                print('{} -> {}'.format(q, ret))
+                answer.append('{} -> {}'.format(q, ret))
+            return answer
 
     def interactive(self):
         cq = self
@@ -440,6 +456,8 @@ def usage():
         -h --help
         -i --interactive
         -v --verbose
+        -r --raw                with this the input follows the raw input format
+                                i.e., <index>_<set> .... .... 
 
         -c --config=filename    path to filename with config (default: 'cachequery.ini')
         -b --batch              path to filename with list of commands
@@ -447,6 +465,7 @@ def usage():
 
         -l --level              target cache level: L3|L2|L1
         -s --set                target cache set number
+        
 
     '''
     print(help)
@@ -454,7 +473,7 @@ def usage():
 def main():
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "ho:c:ivb:s:l:", ["help", "output=", "config=", "interactive", "batch=","set=","level="])
+        opts, args = getopt.getopt(sys.argv[1:], "ho:c:irvb:s:l:", ["help", "output=", "config=", "interactive", "batch=","set=","level="])
     except getopt.GetoptError as err:
         print(str(err))
         usage()
@@ -471,11 +490,16 @@ def main():
     # config overwrite
     cacheset = None
     level = None
+    
+    # raw input, by default it is false
+    raw = False
 
     # TODO: allow overwrite some config values
     for o, a in opts:
         if o == "-v":
             verbose = True
+        elif o == "-r":
+            raw = True
         elif o in ("-h", "--help"):
             usage()
             sys.exit()
@@ -525,7 +549,7 @@ def main():
         config.set('General', 'log_file', output)
 
     # instantiate cq
-    CQ = CacheQuery(config)
+    CQ = CacheQuery(config, raw = raw)
 
     # exec single command
     if not interactive and not batch:
@@ -533,6 +557,8 @@ def main():
             usage()
             sys.exit(2)
         query = ' '.join(args)
+        print(args)
+        print(query)
         CQ.command(query)
 
     # run batch of commands from file
