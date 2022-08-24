@@ -107,6 +107,8 @@ block_list *read_block(lexer_state *state, int max_set)
 		{
 			while ((right < eob) && is_digit_char(c)) c = *(++right);
 			t->block.set = str_to_num(left, right-left);
+			printk(KERN_INFO "t->block.set = %d", t->block.set);
+			
 			// fix this! :S
 			if (t->block.set >= max_set)
 			{
@@ -282,7 +284,7 @@ void smart_buffer_init (struct smart_buffer *code)
 static unsigned int banned_l3_for_l1[L3_CACHE_SETS];
 static unsigned int banned_l3_for_l2[L3_CACHE_SETS];
 static unsigned int banned_l2_for_l1[L2_CACHE_SETS];
-static Block* query_blocks[128];
+static Block* query_blocks[L3_CACHE_SETS][128];
 
 // copy array of opcodes (x86.h) into buffer if still fits, if not return -1
 int opcode(struct smart_buffer *code, char *ops, size_t len)
@@ -374,11 +376,13 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 
 	while (b)
 	{
-		if (query_blocks[b->block.id])
+		//if (query_blocks[b->block.id])
+		if (query_blocks[b->block.set][b->block.id])
 		{
 			b = b->next;
 			continue;
 		}
+		tmp = sets[b->block.set];
 		while (tmp)
 		{
 			// if block doesn't collide in lower levels with previous query block
@@ -399,7 +403,7 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 			goto beach;
 		}
 		// store it
-		query_blocks[b->block.id] = tmp;
+		query_blocks[b->block.set][b->block.id] = tmp;
 		// ban it
 		if (tmp->evict1_sz > 0)
 		{
@@ -446,7 +450,7 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 	while (b)
 	{
 		// Set pointer into right block
-		tmp = query_blocks[b->block.id];
+		tmp = query_blocks[b->block.set][b->block.id];
 		if (!tmp)
 		{
 			goto beach;
