@@ -286,6 +286,9 @@ static unsigned int banned_l3_for_l2[L3_CACHE_SETS];
 static unsigned int banned_l2_for_l1[L2_CACHE_SETS];
 static Block* query_blocks[L3_CACHE_SETS][128];
 
+// for finding sets end
+static Block* sets_p[L3_CACHE_SETS];
+
 // copy array of opcodes (x86.h) into buffer if still fits, if not return -1
 int opcode(struct smart_buffer *code, char *ops, size_t len)
 {
@@ -361,6 +364,7 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 	memset (banned_l3_for_l2, 0, sizeof(banned_l3_for_l2));
 	memset (banned_l2_for_l1, 0, sizeof(banned_l2_for_l1));
 	memset (query_blocks, 0, sizeof(query_blocks));
+	memset (sets_p, 0, sizeof(sets_p));
 
 	// ban sets used by code to avoid them when forming eviction sets
 	for (i = 0; i < JIT_CODE_SZ; i+=sizeof(Block))
@@ -372,29 +376,55 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 
 	// NOTE: RIGHT NOW WE IGNORE THE CACHE_SET
 	// Safe pointers to query blocks
-	tmp = sets[s];
-
+	//tmp = sets[s];
 	while (b)
 	{
+		//tmp =sets[b->block.set];
 		//if (query_blocks[b->block.id])
 		if (query_blocks[b->block.set][b->block.id])
 		{
 			b = b->next;
 			continue;
 		}
-		tmp = sets[b->block.set];
+		if (!sets_p[b->block.set]) 
+		{
+			sets_p[b->block.set] = sets[b->block.set];	
+			tmp = sets_p[b->block.set];
+		}
+		else
+		{
+			sets_p[b->block.set] = sets_p[b->block.set]->next;
+			tmp = sets_p[b->block.set];
+		}
+		//sets_p[b->block.set] = sets_p[b->block.set]->next; 
+
 		while (tmp)
 		{
 			// if block doesn't collide in lower levels with previous query block
 			// (for L2 blocks we fix slice=4)
-			if (((level == 1) && banned_l3_for_l1[(tmp->set3 << L3_SLICE_BITS) | tmp->slice] == 0 && banned_l2_for_l1[tmp->set2] == 0)
-				|| ((level == 2) && (tmp->slice == L3_CACHE_SLICES-1) && banned_l3_for_l2[(tmp->set3 << L3_SLICE_BITS) | tmp->slice] == 0)
-				|| (level == 3))
+			////if (((level == 1) && banned_l3_for_l1[(tmp->set3 << L3_SLICE_BITS) | tmp->slice] == 0 && banned_l2_for_l1[tmp->set2] == 0)
+			////	|| ((level == 2) && (tmp->slice == L3_CACHE_SLICES-1) && banned_l3_for_l2[(tmp->set3 << L3_SLICE_BITS) | tmp->slice] == 0)
+			////	|| (level == 3))
+			if (true)
 			{
+				PRINT( "[debug] break");
+				if ( level == 1 )
+				{
+					if ( banned_l3_for_l1[(tmp->set3 << L3_SLICE_BITS) | tmp->slice] == 0 )
+						PRINT("[debug] banned_l3_for_l1[(tmp->set3 << L3_SLICE_BITS) | tmp->slice] == 0")
+					else
+						PRINT("[debug] banned_l2_for_l1[tmp->set2] == 0")
+				} 
+				else if ( level == 2 )
+				{
+
+				}
+
 				break;
 			}
 			else
 			{
+				PRINT( "[debug] tmp = tmp->next");
 				tmp = tmp->next;
 			}
 		}
@@ -404,6 +434,7 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 		}
 		// store it
 		query_blocks[b->block.set][b->block.id] = tmp;
+		PRINT ("[debug] query_blocks[%d][%d] = %p", b->block.set, b->block.id, tmp);
 		// ban it
 		if (tmp->evict1_sz > 0)
 		{
@@ -415,7 +446,8 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 			banned_l3_for_l2[((tmp->set3 << L3_SLICE_BITS) | tmp->slice)]++;
 		}
 		// next
-		tmp = tmp->next;
+		//tmp = tmp->next;
+		//tmp = sets[b->block.set];
 		b = b->next;
 	}
 
@@ -423,25 +455,34 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 	// OPCODE(code, WBINVD());
 
 	// Access and flush all blocks in set
-	tmp = sets[s];
-	while (tmp)
+	// Only flushes the blocks in set that will be accessed
+	b = lexer->head;
+	while (b)
 	{
-		OPCODE(code, LOAD_RAX((unsigned long long)tmp));
+		//tmp = sets[s];
+		//tmp = sets[b->block.set];
+		tmp = query_blocks[b->block.set][b->block.id];
+		//while (tmp)
+		//{
+			OPCODE(code, LOAD_RAX((unsigned long long)tmp));
+			OPCODE(code, SERIALIZE());
+			OPCODE(code, LOAD_RAX((unsigned long long)tmp));
+			OPCODE(code, SERIALIZE());
+			OPCODE(code, LOAD_RAX((unsigned long long)tmp));
+			OPCODE(code, SERIALIZE());
+		//	tmp = tmp->next;
+		//}
+		//tmp = sets[s];
+		//tmp = sets[b->block.set];
+		//while (tmp)
+		//{
+			OPCODE(code, MOV_RAX_CT((unsigned long long)tmp));
+			OPCODE(code, CLFLUSH_RAX());
+		//	tmp = tmp->next;
+		//}
 		OPCODE(code, SERIALIZE());
-		OPCODE(code, LOAD_RAX((unsigned long long)tmp));
-		OPCODE(code, SERIALIZE());
-		OPCODE(code, LOAD_RAX((unsigned long long)tmp));
-		OPCODE(code, SERIALIZE());
-		tmp = tmp->next;
+		b = b->next;
 	}
-	tmp = sets[s];
-	while (tmp)
-	{
-		OPCODE(code, MOV_RAX_CT((unsigned long long)tmp));
-		OPCODE(code, CLFLUSH_RAX());
-		tmp = tmp->next;
-	}
-	OPCODE(code, SERIALIZE());
 
 	PRINT("[debug] ---------------------------------\n");
 

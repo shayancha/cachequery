@@ -2,7 +2,7 @@
 #define SERIAL 1 // 0 - lfence, 1 - mfence, 2 - cpuid
 #define USE_RDTSCP 0 // 0 - not supported, 1 - supported
 
-#define L3_CACHE_WAYS 12
+#define L3_CACHE_WAYS 16
 #define L3_WAYS_BITS 4 // actually 3.58
 #define L3_SET_BITS 10
 #define L3_LINE_BITS 6
@@ -35,7 +35,7 @@
 
 
 // core cycles
-#define L3_HIT_THRESHOLD 131 // 113-131
+#define L3_HIT_THRESHOLD 160 // 131 // 113-131
 #define L3_MISS_THRESHOLD 300 // 290-...
 #define L2_HIT_THRESHOLD 140 // 79-91
 #define L2_MISS_THRESHOLD 160 // 123-237

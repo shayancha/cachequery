@@ -13,8 +13,8 @@ ccflags-y += -Wall
 
 obj-m := $(TARGET).o
 
-# list of supported cpus: i7-4790 i5-6500 i7-8550u
-cpu ?= i5-6500
+# list of supported cpus: i7-4790 i7-6700 i7-8550u
+cpu ?= i7-6700
 EXTRA_CFLAGS += -DCPU=$(cpu)
 
 all:
