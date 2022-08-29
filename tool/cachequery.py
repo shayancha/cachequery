@@ -12,7 +12,7 @@ CacheQuery log - {}
 
 class CacheQuery():
 
-    def __init__(self, conf, raw):
+    def __init__(self, conf, raw=False):
         self.settings = conf['General']
         self.system = conf['System']
         self.conf = conf
