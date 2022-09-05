@@ -640,6 +640,8 @@ ssize_t val_show(struct cacheset_obj *kobj, char *out, Block **sets, size_t set_
 			{
 				PRINT ("MAX_TIME exceeded\n");
 			}
+
+
 		}
 		else if (code->asks > 0)
 		{
@@ -670,6 +672,13 @@ ssize_t val_show(struct cacheset_obj *kobj, char *out, Block **sets, size_t set_
 	ret = 0;
 	if (get_only_one_time(&conf))
 	{
+		// get the accurate timing from code->ret_time
+		int ii = 0;
+		for ( ii = 0; ii < 28; ii++ ) {
+			//code->ret_time[ii] = code->ret_time[ii] & 0xffff;
+			PRINT("[time] %d address %llx cycle %llx\n", ii, code->ret_time + ii, code->ret_time[ii]);
+		}
+
 		PRINT ("[time] Total reps: %lu (%lu fails)\n", rep, fails);
 		print_hist (hist);
 		PRINT ("[time] Mean: %d\n", get_mean(hist, i-1));

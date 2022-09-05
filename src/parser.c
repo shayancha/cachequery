@@ -28,6 +28,9 @@ static int is_flush_char(char c)
 	return c == '!';
 }
 
+
+
+
 #define MAX_NUM_DIGITS 6
 int str_to_num(const char *ptr, int len)
 {
@@ -302,6 +305,64 @@ int opcode(struct smart_buffer *code, char *ops, size_t len)
 	return 0;
 }
 
+inline void store_to_xmms(struct smart_buffer *code, int iindex ) {
+	uint16_t xmm_index = 0;
+	xmm_index = iindex; // / 8;
+	if (iindex < 4) { // store to xmm0									
+		xmm_index = 0;													
+	} else { 		// store to xmm2, xmm3, xmm4, ..., xmm7				
+		xmm_index = iindex / 4 + 1;										
+	}
+	// move to xmm1 first
+	//////OPCODE(code, MOVD_RAX_XMM(1));
+	//OPCODE(code, MOVD_RAX_XMM(xmm_index));
+
+	//OPCODE(code, C(0x48, 0xc7, 0xc3, 0x00, 0x00, 0x00, 0x00));//    mov    rbx,0x0
+  	//OPCODE(code, C(0x66, 0x48, 0x0f, 0x6e, (1 << 3) | 0xc3));  		  //    movq   xmm1,rbx
+	OPCODE(code, MOVD_RAX_XMM(1));
+	
+	// shift left the destintation xmm by a word
+	OPCODE(code, PSLLQ16(xmm_index));
+
+	/////OPCODE(code, C(0x0f, 0x28, (xmm_index << 3) | 0xc1));
+
+	// bitwise or xmm1 and xmmm
+	OPCODE(code, C(0x0f, 0x56, (xmm_index << 3) | 0xc1));
+	//OPCODE(code, POR(xmm_index, 1));
+	//OPCODE(code, POR(1, xmm_index));
+	return;
+
+	err:
+		PRINT ("[debug] err: code length=%zu bytes\n", code->len);
+		return -1;
+} 
+
+inline void load_xmms_to_buffer(struct smart_buffer *code, int index) {
+	int i = 0;
+	for ( i = 0; i < index; i += 1) {
+
+		int xmm_index = (i < 4) ? 0 : ( i / 4 + 1 );		
+		// move a 
+		OPCODE(code, MOVD_XMM_RAX(xmm_index));
+		PRINT("[debug] movd from xmm%d to rax\n", xmm_index );
+	
+		// right shift the desination by a word
+		OPCODE(code, PSRLQ16(xmm_index));
+		PRINT("[debug] psrlq16 xmm %d", xmm_index);
+
+		// get the lsb
+		OPCODE(code, C(0x48, 0x25, 0xff, 0xff, 0x00, 0x00)); //      and    rax,0xffff
+		// store RAX 
+		// TODO(Mulong): adjust the upper bit in the address to make them zero
+		PRINT("[debug] store rax to address %llx\n", (code->ret_time + i  ) );
+		OPCODE(code, STORE_RAX((unsigned long long) (code->ret_time + i ) ) );
+	}
+
+	err:
+		PRINT ("[debug] err: code length=%zu bytes\n", code->len);
+		return -1;
+}
+
 int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buffer *code, Block **sets, unsigned char level, int t_up, int t_low, Config *conf)
 {
 	block_list *b;
@@ -457,6 +518,7 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 	// Access and flush all blocks in set
 	// Only flushes the blocks in set that will be accessed
 	b = lexer->head;
+	int index = 0;
 	while (b)
 	{
 		//tmp = sets[s];
@@ -525,7 +587,7 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 			{
 				unsigned long long tlb = ((unsigned long long)tmp);
 				tlb = ((tlb >> 12) << 12) | ((tlb & 0xfff) ^ 0x7e0); // same page, different cache set
-				PRINT("[debug] tlb refresh %llx s1=%d s2=%d s3=%d h=%d\n",
+				PRINT("[debug] tlb refresh %llx s1=%d s2=%d s3=%d h=%d\n" -
 					tlb, get_l1_set((void*)tlb), get_l2_set((void*)tlb), get_l3_set((void*)tlb), get_l3_slice((void*)tlb));
 				OPCODE(code, LOAD_RAX(tlb));
 				OPCODE(code, SERIALIZE());
@@ -603,6 +665,12 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 				}
 				else
 				{
+					// temporarily store in xmm register to avoid mem
+					// do not forget to skip xmm1
+					//OPCODE(code, MOVQ_XMM_RDI())
+					PRINT("[debug]  index %d \n", index);
+					store_to_xmms(code, index++);
+					//OPCODE(code, MOVD_RAX_XMM(1));
 					// Just return the load time delay
 					OPCODE(code, MOV_RAX_RDI());
 				}
@@ -712,6 +780,10 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 	cont:
 		b = b->next;
 	}
+	// store the xmm register in the code->ret_time
+	//int kk = 0;
+	load_xmms_to_buffer(code, index);
+	
 	// epilogue
 	OPCODE(code, MOV_RAX_RSI()); // ret value
 	OPCODE(code, POP_RBX());

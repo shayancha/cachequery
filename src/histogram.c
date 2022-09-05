@@ -76,9 +76,10 @@ void print_hist(int *h)
 		if (h[i] > 0)
 		{
 			l += sprintf (&out[l], "%d(%d) ", i, h[i]);
+			PRINT("[debug] %x \n", i);
 		}
 	}
-	PRINT ("[debug] %s\n", out);
+	PRINT ("[debug] %s \n", out);
 	vfree (out);
 }
 

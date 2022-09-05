@@ -41,6 +41,11 @@ struct smart_buffer {
 	char *limit;
 	size_t len;
 	size_t asks;
+	
+	// only xmm0, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7 can be used
+	// each is 128 bit and can store 8 16-bit number 
+	// in total we can store 56 timing measurement in one code
+	unsigned long long ret_time[56];
 };
 
 /* funcs */
@@ -61,5 +66,5 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 
 int opcode(struct smart_buffer *code, char *ops, size_t len);
 #define OPCODE(code, ops) { if (opcode(code, ops, sizeof(ops)/sizeof(char)) != 0) { goto err; } }
-
+//#define OPCODE_NOCHECK(code, ops) 
 #endif /* __PARSER_H */
