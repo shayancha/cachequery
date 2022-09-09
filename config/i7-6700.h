@@ -1,7 +1,7 @@
 /* Skylake desktop i5-6500 */
 
 #define SERIAL 1 // 0 - lfence, 1 - mfence, 2 - cpuid
-#define USE_RDTSCP 0 // 0 - not supported, 1 - supported
+#define USE_RDTSCP 1 // 0 - not supported, 1 - supported
 
 #define L3_CACHE_WAYS 16
 #define L3_WAYS_BITS 4 // actually 3.58

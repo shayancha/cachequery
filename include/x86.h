@@ -89,6 +89,7 @@
 
 #define MEASURE_PRE_TSC(code)			\
 	{									\
+		OPCODE(code, SERIALIZE());			\
 		OPCODE(code, RDTSC());			\
 		OPCODE(code, SERIALIZE());		\
 		OPCODE(code, SHL_RDX_CT(32));	\
