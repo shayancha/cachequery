@@ -319,11 +319,10 @@ inline void store_to_xmms(struct smart_buffer *code, int iindex ) {
 
 	//OPCODE(code, C(0x48, 0xc7, 0xc3, 0x00, 0x00, 0x00, 0x00));//    mov    rbx,0x0
   	//OPCODE(code, C(0x66, 0x48, 0x0f, 0x6e, (1 << 3) | 0xc3));  		  //    movq   xmm1,rbx
-	OPCODE(code, MOVD_RAX_XMM(1));
+	OPCODE(code, MOVD_XMM_RAX(1));
 	
 	// shift left the destintation xmm by a word
 	OPCODE(code, PSLLQ16(xmm_index));
-
 	/////OPCODE(code, C(0x0f, 0x28, (xmm_index << 3) | 0xc1));
 
 	// bitwise or xmm1 and xmmm
@@ -343,7 +342,7 @@ inline void load_xmms_to_buffer(struct smart_buffer *code, int index) {
 
 		int xmm_index = (i < 4) ? 0 : ( i / 4 + 1 );		
 		// move a 
-		OPCODE(code, MOVD_XMM_RAX(xmm_index));
+		OPCODE(code, MOVD_RAX_XMM(xmm_index));
 		PRINT("[debug] movd from xmm%d to rax\n", xmm_index );
 	
 		// right shift the desination by a word
@@ -669,10 +668,10 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 					// do not forget to skip xmm1
 					//OPCODE(code, MOVQ_XMM_RDI())
 					PRINT("[debug]  index %d \n", index);
-					store_to_xmms(code, index++);
 					//OPCODE(code, MOVD_RAX_XMM(1));
 					// Just return the load time delay
 					OPCODE(code, MOV_RAX_RDI());
+					store_to_xmms(code, index++);
 				}
 			}
 			// RSI contains ret value, never modified during execution

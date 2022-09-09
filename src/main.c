@@ -674,9 +674,11 @@ ssize_t val_show(struct cacheset_obj *kobj, char *out, Block **sets, size_t set_
 	{
 		// get the accurate timing from code->ret_time
 		int ii = 0;
-		for ( ii = 0; ii < 28; ii++ ) {
+		//for ( ii = 0; ii < 28; ii++ ) {
+		for (ii =  0; ii < code->asks; ii++) {
 			//code->ret_time[ii] = code->ret_time[ii] & 0xffff;
 			PRINT("[time] %d address %llx cycle %llx\n", ii, code->ret_time + ii, code->ret_time[ii]);
+			ret += sprintf (&out[ret], "%ld ", code->ret_time[ii]);
 		}
 
 		PRINT ("[time] Total reps: %lu (%lu fails)\n", rep, fails);
