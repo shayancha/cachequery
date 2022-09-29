@@ -15,7 +15,7 @@
 /* Number of repetitions used during calibration phase */
 #define NUM_CALIBRATIONS 10000
 /* Number of repetitions for distinguishing HIT/MISS */
-#define NUM_REPETITIONS 1
+#define NUM_REPETITIONS 100
 /* Force a TLB preload for the address to profile */
 #define TLB_PRELOAD TRUE
 /* Choose a cache set to thrash before any memory access in the query */
@@ -23,11 +23,11 @@
 /* Number of blocks used for the thrashing sequence */
 #define THRASHING_SIZE 32
 /* Only return the concrete result for the latest access. Ignores profiling. */
-#define ONLY_ONE_TIME TRUE
+#define ONLY_ONE_TIME FALSE 
 /* Use performance counters instead of rdtsc */
 #define USE_PMC FALSE
 /* Use core cycle instead of TSC */
-#define CORE_CYCLES FALSE 
+#define CORE_CYCLES TRUE 
 
 /* COMPILE TIME OPTIONS */
 /* Maximum numbers of pages used for code allocation */

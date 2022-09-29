@@ -779,8 +779,10 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 	}
 	// store the xmm register in the code->ret_time
 	//int kk = 0;
-	load_xmms_to_buffer(code, index);
-	
+	if (get_only_one_time(conf)) {
+		load_xmms_to_buffer(code, index);
+	}
+
 	// epilogue
 	OPCODE(code, MOV_RAX_RSI()); // ret value
 	OPCODE(code, POP_RBX());

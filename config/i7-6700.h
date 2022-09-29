@@ -25,15 +25,15 @@
 //#define IS_LEADER_SET(x,s) (FALSE)
 #define IS_LEADER_SET(x,s) ((((x>>5)^(x&0x1f)) == (x&0x2)))
 
-
-///// Automatic calibration
-///#define L3_HIT_THRESHOLD 0
-///#define L3_MISS_THRESHOLD 0
-///#define L2_HIT_THRESHOLD 0
-///#define L2_MISS_THRESHOLD 0
-///#define L1_HIT_THRESHOLD 0
-///#define L1_MISS_THRESHOLD 0
-
+/*
+// Automatic calibration
+#define L3_HIT_THRESHOLD 0
+#define L3_MISS_THRESHOLD 0
+#define L2_HIT_THRESHOLD 0
+#define L2_MISS_THRESHOLD 0
+#define L1_HIT_THRESHOLD 0
+#define L1_MISS_THRESHOLD 0
+*/
 
 // core cycles
 #define L3_HIT_THRESHOLD 160 // 131 // 113-131
@@ -43,14 +43,15 @@
 #define L1_HIT_THRESHOLD 1 // 69-79
 #define L1_MISS_THRESHOLD 144 // 79-91
 
-// rdtsc calibrated on i7-6700
+/*
+//rdtsc calibrated on i7-6700
 #define L3_HIT_THRESHOLD 160 // 131 // 113-131
 #define L3_MISS_THRESHOLD 300 // 290-...
 #define L2_HIT_THRESHOLD 140 // 79-91
 #define L2_MISS_THRESHOLD 160 // 123-237
 #define L1_HIT_THRESHOLD 1 // 69-79
 #define L1_MISS_THRESHOLD 63 // 79-91
-
+*/
 
 
 
