@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from tabnanny import verbose
 from lark import Lark, Transformer, v_args
 from functools import reduce
 from datetime import datetime
@@ -12,11 +13,12 @@ CacheQuery log - {}
 
 class CacheQuery():
 
-    def __init__(self, conf, raw=False):
+    def __init__(self, conf, raw=False, verbose=True):
         self.settings = conf['General']
         self.system = conf['System']
         self.conf = conf
         self.raw = raw
+        self.verbose = verbose
 
         # open db from beggining
         if self.settings['db_cache']:
@@ -303,12 +305,13 @@ class CacheQuery():
         try:
             if refresh:
                 with open(path, 'w') as endpoint:
-                    print(query)
+                    #print(query)
                     endpoint.write('{}\n'.format(query))
                     endpoint.close()
             with open(path, 'r') as endpoint:
                 res = endpoint.readline()
-                print(res.rstrip())
+                if self.verbose == True:
+                    print(res.rstrip())
                 endpoint.close()
                 return res.rstrip()
         except:
@@ -325,7 +328,7 @@ class CacheQuery():
             query_raw = [input]
             q_raw = query_raw[0] 
             ret = self.query(q_raw, refresh)
-            print('{} -> {}'.format(q_raw, ret))
+            #print('{} -> {}'.format(q_raw, ret))
             answer.append('{} -> {}'.format(q_raw, ret))
             return answer
         else:
@@ -337,9 +340,9 @@ class CacheQuery():
             answer = []
             for i in range(len(query)):
                 q_raw = query_raw[i]
-                print(q_raw)
+                #print(q_raw)
                 q = query[i]
-                print(q)
+                #print(q)
                 ret = ''
                 # Check cache to safe avoid real query (only for deterministic policies)
                 if self.db and not bypass_cache:
@@ -350,7 +353,8 @@ class CacheQuery():
                         self.db.put(str.encode(q), str.encode(ret))
                 else:
                     ret = ret.decode('utf-8')
-                print('{} -> {}'.format(q, ret))
+                if self.verbose == True:
+                    print('{} -> {}'.format(q, ret))
                 answer.append('{} -> {}'.format(q, ret))
             return answer
 
@@ -557,8 +561,8 @@ def main():
             usage()
             sys.exit(2)
         query = ' '.join(args)
-        print(args)
-        print(query)
+        #print(args)
+        #print(query)
         CQ.command(query)
 
     # run batch of commands from file
