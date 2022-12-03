@@ -305,6 +305,37 @@ int opcode(struct smart_buffer *code, char *ops, size_t len)
 	return 0;
 }
 
+inline void store_bit_to_xmms(struct smart_buffer *code, int iindex ) {
+	uint16_t xmm_index = 0;
+	xmm_index = iindex; // / 8;
+	if (iindex < 64 ) { //4) { // store to xmm0									
+		xmm_index = 0;													
+	} else { 		// store to xmm2, xmm3, xmm4, ..., xmm7				
+		xmm_index = iindex / 64 + 1;										
+	}
+
+	// move to xmm1 first
+	//////OPCODE(code, MOVD_RAX_XMM(1));
+	//OPCODE(code, MOVD_RAX_XMM(xmm_index));
+	//OPCODE(code, C(0x48, 0xc7, 0xc3, 0x00, 0x00, 0x00, 0x00));//    mov    rbx,0x0
+  	//OPCODE(code, C(0x66, 0x48, 0x0f, 0x6e, (1 << 3) | 0xc3));  		  //    movq   xmm1,rbx
+	OPCODE(code, MOVD_XMM_RAX(1));
+	
+	// shift left the destintation xmm by a bit
+	OPCODE(code, PSLLQ1(xmm_index));
+	/////OPCODE(code, C(0x0f, 0x28, (xmm_index << 3) | 0xc1));
+
+	// bitwise or xmm1 and xmmm
+	OPCODE(code, C(0x0f, 0x56, (xmm_index << 3) | 0xc1));
+	//OPCODE(code, POR(xmm_index, 1));
+	//OPCODE(code, POR(1, xmm_index));
+	return;
+
+	err:
+		PRINT ("[debug] err: code length=%zu bytes\n", code->len);
+		return -1;
+}
+
 inline void store_to_xmms(struct smart_buffer *code, int iindex ) {
 	uint16_t xmm_index = 0;
 	xmm_index = iindex; // / 8;
@@ -658,7 +689,9 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 					OPCODE(code, CMP_RDX_CT(t_up));
 					// update bit
 					OPCODE(code, CMOVAE_RAX_RDI());
-					OPCODE(code, SHL_RSI());
+					//////OPCODE(code, SHL_RSI());
+
+					store_bit_to_xmms(code, index++);
 				}
 				else
 				{
@@ -779,7 +812,7 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 	}
 	// store the xmm register in the code->ret_time
 	//int kk = 0;
-	if (get_only_one_time(conf)) {
+	if (true){//get_only_one_time(conf)) {
 		load_xmms_to_buffer(code, index);
 	}
 

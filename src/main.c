@@ -645,18 +645,33 @@ ssize_t val_show(struct cacheset_obj *kobj, char *out, Block **sets, size_t set_
 		}
 		else if (code->asks > 0)
 		{
-			i = 0;
-			bit = 1ULL << (code->asks - 1);
-			while (bit != 0ULL)
-			{
+			/////i = 0;
+			/////bit = 1ULL << (code->asks - 1);
+			int ii = 0;
+			for ( ii = 0; ii < code->asks ; ii++ ) {
+				if (ii % 16 == 0) {
+					retmask = code->ret_time[ii / 16];
+					PRINT("[debug] %llx", retmask);
+				}
+				bit = 1ULL << ( ( code->asks - ii   - 2) % 16 );
 				// count hit
 				if ((retmask & bit) == 0ULL)
 				{
-					trace[i] += 1;
+					trace[ii] += 1;
 				}
-				bit >>= 1;
-				i += 1;
 			}
+			////while (bit != 0ULL)
+			////{
+			////	retmask = 
+
+			////	// count hit
+			////	if ((retmask & bit) == 0ULL)
+			////	{
+			////		trace[i] += 1;
+			////	}
+			////	bit >>= 1;
+			////	i += 1;
+			////}
 		}
 		// yield (); // force preemption
 	}
