@@ -648,12 +648,18 @@ ssize_t val_show(struct cacheset_obj *kobj, char *out, Block **sets, size_t set_
 			/////i = 0;
 			/////bit = 1ULL << (code->asks - 1);
 			int ii = 0;
+			PRINT("[debug] code->asks=%d", code->asks);
+			retmask = code->ret_time[code->asks / 16];
 			for ( ii = 0; ii < code->asks ; ii++ ) {
-				if (ii % 16 == 0) {
-					retmask = code->ret_time[ii / 16];
-					PRINT("[debug] %llx", retmask);
+				PRINT("[debug] code->asks=%d", code->asks);
+	
+				PRINT("ii=%d", ii);
+				if (ii % 16 == ( code->asks % 16)) {
+					retmask = code->ret_time[(code->asks - ii - 1) / 16];
+					int z = ii / 16;
+					PRINT("[debug] code->ret_time[%d] = %llx", z,  retmask);
 				}
-				bit = 1ULL << ( ( code->asks - ii   - 2) % 16 );
+				bit = 1ULL << ( ( code->asks - ii   - 1 ) % 16 );
 				// count hit
 				if ((retmask & bit) == 0ULL)
 				{

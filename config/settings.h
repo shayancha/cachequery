@@ -15,7 +15,7 @@
 /* Number of repetitions used during calibration phase */
 #define NUM_CALIBRATIONS 10000
 /* Number of repetitions for distinguishing HIT/MISS */
-#define NUM_REPETITIONS 100
+#define NUM_REPETITIONS 1 
 /* Force a TLB preload for the address to profile */
 #define TLB_PRELOAD TRUE
 /* Choose a cache set to thrash before any memory access in the query */
