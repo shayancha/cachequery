@@ -609,7 +609,7 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 			goto cont; // continue w/o accessing block
 		}
 		// Do we profile this memory access?
-		else if ( (b->block.ask && asks < 63))
+		else if ( (b->block.ask )) //&& asks < 63))
 		{
 			// Perform TLB preload if set
 			if (get_tlb_preload(conf) && tmp->evict1_sz > 0)
@@ -638,7 +638,7 @@ int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buff
 		OPCODE(code, LOAD_RAX((unsigned long long)tmp));
 
 		// Do we profile this memory access?
-		if (b->block.ask && asks < 63)
+		if (b->block.ask )//&& asks < 63)
 		{
 			if (get_use_pmc(conf))
 			{

@@ -650,13 +650,17 @@ ssize_t val_show(struct cacheset_obj *kobj, char *out, Block **sets, size_t set_
 			int ii = 0;
 			PRINT("[debug] code->asks=%d", code->asks);
 			retmask = code->ret_time[code->asks / 16];
+			int xx = code->asks / 16;
+			PRINT("[debug] code->ret_time[%d] = %llx", xx,  retmask);
+				
+			
 			for ( ii = 0; ii < code->asks ; ii++ ) {
 				PRINT("[debug] code->asks=%d", code->asks);
 	
 				PRINT("ii=%d", ii);
 				if (ii % 16 == ( code->asks % 16)) {
 					retmask = code->ret_time[(code->asks - ii - 1) / 16];
-					int z = ii / 16;
+					int z = (code->asks -ii -1 ) / 16;
 					PRINT("[debug] code->ret_time[%d] = %llx", z,  retmask);
 				}
 				bit = 1ULL << ( ( code->asks - ii   - 1 ) % 16 );
