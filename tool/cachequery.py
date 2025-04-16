@@ -6,6 +6,8 @@ from functools import reduce
 from datetime import datetime
 import os, cmd, sys, getopt, re, subprocess, configparser
 import plyvel
+import psutil
+import threading
 
 LOG_HEADER_TEMPLATE = '''====================================
 CacheQuery log - {}
@@ -332,31 +334,63 @@ class CacheQuery():
             answer.append('{} -> {}'.format(q_raw, ret))
             return answer
         else:
-        
+            
             try:
                 query, query_raw = self.parse(input)
             except:
                 return
-            answer = []
+            
+            import psutil
+
+            def pin_this_thread(core_id):
+                try:
+                    p = psutil.Process()
+                    p.cpu_affinity([core_id])
+                    print(f"Pinned to core {core_id}")
+                except Exception as e:
+                    print(f"[!] Failed to pin to core {core_id}: {e}")
+
+            def run_on_core(core_id, q_list, raw_list, verbose=True):
+                pin_this_thread(core_id)
+                results = []
+                for q, q_raw in zip(q_list, raw_list):
+                    ret = ''
+                    if self.db and not bypass_cache:
+                        ret = self.db.get(str.encode(q))
+                    if not ret:
+                        ret = self.query(q_raw, refresh)
+                        if self.db:
+                            self.db.put(str.encode, str.encode(ret))
+                    else:
+                        ret = ret.decode('utf-8')
+
+                    if verbose:
+                        print(f'{q} -> {ret}')
+                    results.append(f'{q} -> {ret}')
+
+                return results
+
+            
+            attacker = []
+            victim = []
+            attacker_raw = []
+            victim_raw = []
+
             for i in range(len(query)):
-                q_raw = query_raw[i]
-                #print(q_raw)
+                q_raw = query_raw
                 q = query[i]
-                #print(q)
-                ret = ''
-                # Check cache to safe avoid real query (only for deterministic policies)
-                if self.db and not bypass_cache:
-                    ret = self.db.get(str.encode(q))
-                if not ret:
-                    ret = self.query(q_raw, refresh)
-                    if self.db:
-                        self.db.put(str.encode(q), str.encode(ret))
+                if '?' in q or '!' in q:
+                    attacker.append(q)
+                    attacker_raw.append(q_raw)
                 else:
-                    ret = ret.decode('utf-8')
-                if self.verbose == True:
-                    print('{} -> {}'.format(q, ret))
-                answer.append('{} -> {}'.format(q, ret))
-            return answer
+                    victim.append(q)
+                    victim_raw.append(q_raw)
+                
+
+            results_attacker = run_on_core(0, attacker, attacker_raw, verbose=self.verbose)
+            results_victim = run_on_core(1, victim, victim_raw, verbose=self.verbose)
+
+            return results_attacker + results_victim
 
     def interactive(self):
         cq = self
