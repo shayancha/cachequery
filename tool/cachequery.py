@@ -388,7 +388,7 @@ class CacheQuery():
                 
 
             results_attacker = run_on_core(0, attacker, attacker_raw, verbose=self.verbose)
-            results_victim = run_on_core(1, victim, victim_raw, verbose=self.verbose)
+            results_victim = run_on_core(3, victim, victim_raw, verbose=self.verbose)
 
             return results_attacker + results_victim
 
