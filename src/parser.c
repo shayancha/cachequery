@@ -333,7 +333,7 @@ inline void store_bit_to_xmms(struct smart_buffer *code, int iindex ) {
 
 	err:
 		PRINT ("[debug] err: code length=%zu bytes\n", code->len);
-		return -1;
+		return;
 }
 
 inline void store_to_xmms(struct smart_buffer *code, int iindex ) {
@@ -364,7 +364,7 @@ inline void store_to_xmms(struct smart_buffer *code, int iindex ) {
 
 	err:
 		PRINT ("[debug] err: code length=%zu bytes\n", code->len);
-		return -1;
+		return;
 } 
 
 inline void load_xmms_to_buffer(struct smart_buffer *code, int index) {
@@ -390,7 +390,7 @@ inline void load_xmms_to_buffer(struct smart_buffer *code, int index) {
 
 	err:
 		PRINT ("[debug] err: code length=%zu bytes\n", code->len);
-		return -1;
+		return;
 }
 
 int generate_code(lexer_state *lexer, unsigned int target_set, struct smart_buffer *code, Block **sets, unsigned char level, int t_up, int t_low, Config *conf)
