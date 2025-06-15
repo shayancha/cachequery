@@ -548,6 +548,9 @@ int calibrate (Block **set, int nsets, int ways, unsigned char measure_miss)
 
 ssize_t val_show(struct cacheset_obj *kobj, char *out, Block **sets, size_t set_length, size_t evict_size, int t_hit, int t_miss, unsigned char level)
 {
+	int xx;
+	int z;
+	
 	size_t trace[128];
 	size_t i = 0, rep, fails, ret;
 	unsigned long flags;
@@ -648,19 +651,19 @@ ssize_t val_show(struct cacheset_obj *kobj, char *out, Block **sets, size_t set_
 			/////i = 0;
 			/////bit = 1ULL << (code->asks - 1);
 			int ii = 0;
-			PRINT("[debug] code->asks=%d", code->asks);
+			PRINT("[debug] code->asks=%zu", code->asks);
 			retmask = code->ret_time[code->asks / 16];
-			int xx = code->asks / 16;
+			xx = code->asks / 16;
 			PRINT("[debug] code->ret_time[%d] = %llx", xx,  retmask);
 				
 			
 			for ( ii = 0; ii < code->asks ; ii++ ) {
-				PRINT("[debug] code->asks=%d", code->asks);
+				PRINT("[debug] code->asks=%zu", code->asks);
 	
 				PRINT("ii=%d", ii);
 				if (ii % 16 == ( code->asks % 16)) {
 					retmask = code->ret_time[(code->asks - ii - 1) / 16];
-					int z = (code->asks -ii -1 ) / 16;
+					z = (code->asks -ii -1 ) / 16;
 					PRINT("[debug] code->ret_time[%d] = %llx", z,  retmask);
 				}
 				bit = 1ULL << ( ( code->asks - ii   - 1 ) % 16 );
@@ -702,8 +705,8 @@ ssize_t val_show(struct cacheset_obj *kobj, char *out, Block **sets, size_t set_
 		//for ( ii = 0; ii < 28; ii++ ) {
 		for (ii =  0; ii < code->asks ; ii++) {
 			//code->ret_time[ii] = code->ret_time[ii] & 0xffff;
-			PRINT("[time] %d address %llx cycle %llx\n", ii, code->ret_time + ii, code->ret_time[ii]);
-			ret += sprintf (&out[ret], "%ld ", code->ret_time[ii]);
+			PRINT("[time] %d address %llx cycle %llu\n", ii, code->ret_time + ii, code->ret_time[ii]);
+			ret += sprintf (&out[ret], "%llu ", code->ret_time[ii]);
 		}
 
 		PRINT ("[time] Total reps: %lu (%lu fails)\n", rep, fails);
